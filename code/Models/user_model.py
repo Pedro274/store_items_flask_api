@@ -4,8 +4,11 @@ class UserModel(db.Model):
     __tablename__= 'users'
 
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(80))
-    password = db.Column(db.String(80))
+    username = db.Column(db.String(80), unique = True)
+    password = db.Column(db.String(80), nullable = False)
+
+    #relationship
+    stores = db.relationship('StoreModel')
 
     def __init__(self, username, password):
         self.username = username
@@ -15,7 +18,7 @@ class UserModel(db.Model):
         return "User(id='%s')" % self.id
 
     def json(self):
-        return {'username': self.username, 'id': self.id}
+        return {'username': self.username, 'id': self.id, 'stores': [store.json() for store in self.stores]}
 
     @classmethod
     def find_user_by_username(cls, username):

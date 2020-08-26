@@ -1,6 +1,7 @@
 from flask_restful import Resource, reqparse
 from flask_jwt import jwt_required
 from Models.item_model import ItemModel
+from Models.store_model import StoreModel
 
 class Items(Resource):
     def get(self):
@@ -11,7 +12,6 @@ class Items(Resource):
         }
 
 class Item(Resource):
-
     parser = reqparse.RequestParser()
     parser.add_argument('price',
                     type=float,
@@ -26,10 +26,18 @@ class Item(Resource):
         return {'message': 'Item not found'}, 404
 
     def post(self, name):
+        self.parser.add_argument('store_id',
+                    type=int,
+                    required= True,
+                    help='This field cannot be left blank')
+        args = self.parser.parse_args()
+
         item = ItemModel.find_by_name(name)
+        store = StoreModel.find_by_id(args.store_id)
+        if store == None:
+            return {'message': 'Store not found check id provided'}, 404
         if item == None:
-            args = self.parser.parse_args()
-            new_Item = ItemModel(name, args['price'])
+            new_Item = ItemModel(name, **args)
             new_Item.save_to_db()
             return {
                 'message': 'Item was created',
@@ -37,17 +45,19 @@ class Item(Resource):
             }
         return {'message': f'item with the name of {name} already exits'}
 
+
     def put(self, name):
         args = self.parser.parse_args()
         item = ItemModel.find_by_name(name)
         if item:
-            item['price'] = args.get('price', item['price'])
+            item.price = args.get('price', item.price)
             item.save_to_db()
             return {
                 'message':'Item was updated',
                 'item_updated': item.json()
             }, 202
         return {'message': 'Item not found'}, 404
+
 
     def delete(self, name):
         item = ItemModel.find_by_name(name)

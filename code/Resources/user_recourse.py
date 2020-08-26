@@ -18,6 +18,27 @@ class User(Resource):
             return user.json()
         return {'message': 'user not found'}, 404
 
+    def put(self, username):
+        parser.add_argument('username', type=str, help="please check your username field (str) format required")
+        args = parser.parse_args()
+        user = UserModel.find_user_by_username(username)
+        if user:
+            user.username = args.get('username', user.username)
+            user.password = args.get('password', user.password)
+            user.save_to_db()
+            return {
+                'message': 'user updated',
+                'user': user.json()
+            }
+        return {'message': 'user not found'}, 404
+    
+    def delete(self, username):
+        user = UserModel.find_user_by_username(username)
+        if user:
+            user.delete_from_db()
+            return {'message': f'user {username} was deleted'}
+        return {'message': 'user not found'}, 404
+
 
 class UserRegister(Resource):
     def post(self):
